@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,12 +10,30 @@ import GameOverlay from '@/components/GameOverlay';
 import ReplayAnalysis from '@/components/ReplayAnalysis';
 import NotificationSettings from '@/components/NotificationSettings';
 import GameSenseEngine from '@/components/GameSenseEngine';
+import ChampionDetector from '@/components/ChampionDetector';
+import MatchupAnalyzer from '@/components/MatchupAnalyzer';
+
+interface Champion {
+  name: string;
+  role: string;
+  earlyGameStrength: 'weak' | 'medium' | 'strong';
+  counters: string[];
+  counteredBy: string[];
+}
+
+interface MatchupData {
+  playerChampion: Champion;
+  enemyChampion: Champion;
+  lane: string;
+  matchupAdvantage: 'favorable' | 'neutral' | 'unfavorable';
+}
 
 const Index = () => {
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [overlayActive, setOverlayActive] = useState(false);
   const [gameTime, setGameTime] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [matchupData, setMatchupData] = useState<MatchupData | null>(null);
 
   const roles = [
     { id: 'top', name: 'Top Lane', icon: Shield, color: 'bg-blue-600' },
@@ -55,6 +72,12 @@ const Index = () => {
     setOverlayActive(false);
     setGameTime(0);
     setNotifications([]);
+    setMatchupData(null);
+  };
+
+  const handleChampionDetection = (data: MatchupData) => {
+    setMatchupData(data);
+    setSelectedRole(data.lane); // Auto-set role based on detected lane
   };
 
   return (
@@ -93,9 +116,12 @@ const Index = () => {
           {/* Main Control Panel */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overlay" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
+              <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
                 <TabsTrigger value="overlay" className="data-[state=active]:bg-blue-600">
                   Live Overlay
+                </TabsTrigger>
+                <TabsTrigger value="matchup" className="data-[state=active]:bg-blue-600">
+                  Matchup
                 </TabsTrigger>
                 <TabsTrigger value="replay" className="data-[state=active]:bg-blue-600">
                   Replay Analysis
@@ -137,7 +163,19 @@ const Index = () => {
                           );
                         })}
                       </div>
+                      {matchupData && (
+                        <div className="mt-3 p-3 bg-blue-900/30 border border-blue-600 rounded-lg">
+                          <p className="text-blue-200 text-sm">
+                            ✓ Auto-detected: {matchupData.playerChampion.name} ({matchupData.lane}) vs {matchupData.enemyChampion.name}
+                          </p>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Champion Detection */}
+                    {overlayActive && (
+                      <ChampionDetector onDetection={handleChampionDetection} />
+                    )}
 
                     {/* Overlay Control */}
                     <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
@@ -167,6 +205,26 @@ const Index = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="matchup" className="space-y-4">
+                {matchupData ? (
+                  <MatchupAnalyzer
+                    playerChampion={matchupData.playerChampion}
+                    enemyChampion={matchupData.enemyChampion}
+                    matchupAdvantage={matchupData.matchupAdvantage}
+                  />
+                ) : (
+                  <Card className="bg-slate-800/50 border-slate-700">
+                    <CardContent className="p-8 text-center">
+                      <Eye className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                      <h3 className="text-white font-semibold mb-2">No Matchup Data</h3>
+                      <p className="text-slate-400">
+                        Start the overlay to automatically detect champions and analyze the matchup
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="replay">
@@ -206,7 +264,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Quick Tips */}
+            {/* Pro Tips */}
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-white text-lg">Pro Tips</CardTitle>
@@ -251,6 +309,7 @@ const Index = () => {
           role={selectedRole}
           gameTime={gameTime}
           active={overlayActive}
+          matchupData={matchupData}
           onNotification={(notification) => {
             setNotifications(prev => [...prev, { ...notification, timestamp: Date.now() }]);
           }}

@@ -6,6 +6,7 @@
     "output": "dist-electron",
     "buildResources": "public"
   },
+  "main": "electron/main.cjs",
   "files": [
     "dist/**/*",
     "electron/**/*"

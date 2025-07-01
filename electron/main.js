@@ -100,13 +100,32 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
 
-// IPC handlers
+// IPC handlers for League integration
 ipcMain.handle('get-league-data', async () => {
-  // This would integrate with the LCU service
-  return { connected: true, gamePhase: 'InProgress' };
+  try {
+    // Mock data for now - this would integrate with LCU service
+    return { 
+      connected: true, 
+      gamePhase: 'InProgress',
+      playerRole: 'mid',
+      gameTime: 300
+    };
+  } catch (error) {
+    console.error('Error getting league data:', error);
+    return { connected: false, gamePhase: 'None' };
+  }
 });
 
 ipcMain.handle('analyze-replay', async () => {
-  // This would trigger replay analysis
-  return { success: true, analysisId: Date.now() };
+  try {
+    // Mock replay analysis - this would trigger actual analysis
+    return { 
+      success: true, 
+      analysisId: Date.now(),
+      insights: ['Good CS at 10 minutes', 'Consider more vision control']
+    };
+  } catch (error) {
+    console.error('Error analyzing replay:', error);
+    return { success: false, error: error.message };
+  }
 });

@@ -20,14 +20,12 @@ function createMainWindow() {
     title: 'League Coach Pro'
   });
 
-  const startUrl = isDev 
-    ? 'http://localhost:8080' 
-    : `file://${path.join(__dirname, '../dist/index.html')}`;
-  
-  mainWindow.loadURL(startUrl);
-
+  // Load the app
   if (isDev) {
+    mainWindow.loadURL('http://localhost:8080');
     mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
   mainWindow.on('closed', () => {
@@ -50,11 +48,13 @@ function createOverlayWindow() {
     }
   });
 
-  const overlayUrl = isDev 
-    ? 'http://localhost:8080#/overlay' 
-    : `file://${path.join(__dirname, '../dist/index.html#/overlay')}`;
+  // Load the overlay route
+  if (isDev) {
+    overlayWindow.loadURL('http://localhost:8080#/overlay');
+  } else {
+    overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: '/overlay' });
+  }
   
-  overlayWindow.loadURL(overlayUrl);
   overlayWindow.hide();
 
   overlayWindow.on('closed', () => {

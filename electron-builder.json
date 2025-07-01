@@ -8,9 +8,7 @@
   },
   "files": [
     "dist/**/*",
-    "electron/**/*",
-    "!node_modules/**/*",
-    "node_modules/electron/**/*"
+    "electron/**/*"
   ],
   "extraResources": [
     {
@@ -20,30 +18,15 @@
     }
   ],
   "win": {
-    "target": {
-      "target": "nsis",
-      "arch": ["x64"]
-    },
+    "target": "portable",
     "icon": "public/favicon.ico"
   },
   "mac": {
-    "target": {
-      "target": "dmg",
-      "arch": ["x64", "arm64"]
-    },
-    "icon": "public/favicon.ico",
-    "category": "public.app-category.games"
+    "target": "dir",
+    "icon": "public/favicon.ico"
   },
   "linux": {
-    "target": {
-      "target": "AppImage",
-      "arch": ["x64"]
-    },
-    "icon": "public/favicon.ico",
-    "category": "Game"
-  },
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true
+    "target": "dir",
+    "icon": "public/favicon.ico"
   }
 }

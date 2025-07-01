@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import GameOverlay from '@/components/GameOverlay';
+import ChampionTips from '@/components/ChampionTips';
 import { useLeagueIntegration } from '@/hooks/useLeagueIntegration';
 
 const Overlay = () => {
@@ -17,22 +18,37 @@ const Overlay = () => {
     }
   }, [gamePhase]);
 
-  if (!connected || gamePhase !== 'InProgress') {
+  if (!connected) {
     return (
       <div className="fixed top-4 left-4 bg-slate-900/95 border border-slate-600 rounded-lg p-3 text-white text-sm">
-        Waiting for game...
+        Waiting for League connection...
       </div>
     );
   }
 
+  // Show champion tips during champion select
+  if (gamePhase === 'ChampSelect') {
+    return <ChampionTips />;
+  }
+
+  // Show game overlay during active game
+  if (gamePhase === 'InProgress') {
+    return (
+      <GameOverlay
+        role="mid"
+        gameTime={gameTime}
+        onNotification={(notification) => {
+          console.log('Notification:', notification);
+        }}
+      />
+    );
+  }
+
+  // Default waiting state
   return (
-    <GameOverlay
-      role="mid"
-      gameTime={gameTime}
-      onNotification={(notification) => {
-        console.log('Notification:', notification);
-      }}
-    />
+    <div className="fixed top-4 left-4 bg-slate-900/95 border border-slate-600 rounded-lg p-3 text-white text-sm">
+      Waiting for game...
+    </div>
   );
 };
 

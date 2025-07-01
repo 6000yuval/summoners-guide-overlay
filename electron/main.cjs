@@ -66,7 +66,7 @@ app.whenReady().then(() => {
   createMainWindow();
   createOverlayWindow();
 
-  // Register global shortcuts
+  // Register unified Alt+A hotkey for overlay and champion tips
   globalShortcut.register('Alt+A', () => {
     if (overlayWindow) {
       if (overlayWindow.isVisible()) {
@@ -74,12 +74,6 @@ app.whenReady().then(() => {
       } else {
         overlayWindow.show();
       }
-    }
-  });
-
-  globalShortcut.register('Alt+Z', () => {
-    if (mainWindow) {
-      mainWindow.webContents.send('toggle-champion-select');
     }
   });
 
@@ -106,7 +100,7 @@ ipcMain.handle('get-league-data', async () => {
     // Mock data for now - this would integrate with LCU service
     return { 
       connected: true, 
-      gamePhase: 'InProgress',
+      gamePhase: 'ChampSelect', // Can be 'ChampSelect', 'InProgress', 'None'
       playerRole: 'mid',
       gameTime: 300
     };

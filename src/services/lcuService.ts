@@ -33,25 +33,32 @@ class LCUService {
 
   async connect(): Promise<boolean> {
     try {
-      // In a real Electron app, this would read the lockfile
-      // For demo purposes, we'll simulate the connection
       console.log('Attempting to connect to League Client...');
       
-      // Simulate reading lockfile from: 
-      // Windows: C:\Riot Games\League of Legends\lockfile
-      // macOS: /Applications/League of Legends.app/Contents/LoL/lockfile
+      // Try to read the actual lockfile
+      const credentials = await this.readLockfile();
+      if (credentials) {
+        this.credentials = credentials;
+        this.baseUrl = `${this.credentials.protocol}://riot:${this.credentials.password}@127.0.0.1:${this.credentials.port}`;
+        
+        // Test the connection
+        const testResponse = await this.testConnection();
+        if (testResponse) {
+          this.isConnected = true;
+          console.log('Successfully connected to League Client');
+          return true;
+        }
+      }
       
-      // Mock credentials for demo
+      // Fallback to demo mode if no client found
+      console.log('League Client not found, using demo mode');
       this.credentials = {
         port: 58783,
         password: 'demo-password',
         protocol: 'https'
       };
-
       this.baseUrl = `${this.credentials.protocol}://riot:${this.credentials.password}@127.0.0.1:${this.credentials.port}`;
       this.isConnected = true;
-      
-      console.log('Successfully connected to League Client');
       return true;
     } catch (error) {
       console.error('Failed to connect to League Client:', error);
@@ -60,22 +67,79 @@ class LCUService {
     }
   }
 
+  private async readLockfile(): Promise<LCUCredentials | null> {
+    try {
+      // Check if we're in Electron environment
+      if (typeof window !== 'undefined' && (window as any).electronAPI) {
+        const credentials = await (window as any).electronAPI.readLockfile();
+        return credentials;
+      }
+      
+      // Browser environment - return null to use demo mode
+      return null;
+    } catch (error) {
+      console.error('Error reading lockfile:', error);
+      return null;
+    }
+  }
+
+  private async testConnection(): Promise<boolean> {
+    try {
+      if (!this.credentials) return false;
+      
+      // Use Electron API if available
+      if (typeof window !== 'undefined' && (window as any).electronAPI) {
+        return await (window as any).electronAPI.testLCUConnection(this.credentials);
+      }
+      
+      // Fallback to browser fetch (will likely fail due to CORS)
+      try {
+        const response = await fetch(`${this.baseUrl}/lol-gameflow/v1/gameflow-phase`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${btoa(`riot:${this.credentials.password}`)}`,
+          },
+        });
+        
+        return response.ok;
+      } catch (error) {
+        // Expected to fail in browser due to CORS
+        return false;
+      }
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      return false;
+    }
+  }
+
   async getGameflowPhase(): Promise<GameflowPhase | null> {
     if (!this.isConnected) return null;
 
     try {
-      // Mock API call - in real app would be:
-      // const response = await fetch(`${this.baseUrl}/lol-gameflow/v1/gameflow-phase`);
-      // return await response.json();
+      // Try real API call first
+      if (this.credentials && this.credentials.password !== 'demo-password') {
+        const response = await fetch(`${this.baseUrl}/lol-gameflow/v1/gameflow-phase`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${btoa(`riot:${this.credentials.password}`)}`,
+          },
+        });
+        
+        if (response.ok) {
+          const phase = await response.text();
+          return { phase: phase.replace(/"/g, '') as GameflowPhase['phase'] };
+        }
+      }
       
-      // For demo, simulate different phases
+      // Fallback to demo mode
       const phases: GameflowPhase['phase'][] = ['None', 'ChampSelect', 'InProgress'];
       const randomPhase = phases[Math.floor(Math.random() * phases.length)];
       
       return { phase: randomPhase };
     } catch (error) {
       console.error('Failed to get gameflow phase:', error);
-      return null;
+      // Return demo data on error
+      return { phase: 'None' };
     }
   }
 
@@ -83,7 +147,22 @@ class LCUService {
     if (!this.isConnected) return null;
 
     try {
-      // Mock champion select data
+      // Try real API call first
+      if (this.credentials && this.credentials.password !== 'demo-password') {
+        const response = await fetch(`${this.baseUrl}/lol-champ-select/v1/session`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${btoa(`riot:${this.credentials.password}`)}`,
+          },
+        });
+        
+        if (response.ok) {
+          const session = await response.json();
+          return session;
+        }
+      }
+      
+      // Fallback to mock champion select data
       return {
         localPlayerCellId: 0,
         myTeam: [

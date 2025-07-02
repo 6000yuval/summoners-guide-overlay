@@ -22,11 +22,21 @@ function createMainWindow() {
 
   // Load the app
   if (isDev) {
-    mainWindow.loadURL('http://localhost:8080');
+    mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // Fix white screen issue by waiting for ready-to-show
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
+  // Debug logging for production builds
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription);
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -50,7 +60,7 @@ function createOverlayWindow() {
 
   // Load the overlay route
   if (isDev) {
-    overlayWindow.loadURL('http://localhost:8080#/overlay');
+    overlayWindow.loadURL('http://localhost:5173#/overlay');
   } else {
     overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: '/overlay' });
   }
@@ -107,6 +117,60 @@ ipcMain.handle('get-league-data', async () => {
   } catch (error) {
     console.error('Error getting league data:', error);
     return { connected: false, gamePhase: 'None' };
+  }
+});
+
+ipcMain.handle('read-lockfile', async () => {
+  try {
+    const fs = require('fs');
+    const os = require('os');
+    
+    let lockfilePath;
+    if (process.platform === 'win32') {
+      lockfilePath = path.join('C:', 'Riot Games', 'League of Legends', 'lockfile');
+    } else if (process.platform === 'darwin') {
+      lockfilePath = '/Applications/League of Legends.app/Contents/LoL/lockfile';
+    } else {
+      return null;
+    }
+    
+    if (fs.existsSync(lockfilePath)) {
+      const lockfileContent = fs.readFileSync(lockfilePath, 'utf8');
+      const [name, pid, port, password, protocol] = lockfileContent.split(':');
+      return { port: parseInt(port), password, protocol };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error reading lockfile:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('test-lcu-connection', async (event, credentials) => {
+  try {
+    if (!credentials) return false;
+    
+    const https = require('https');
+    const agent = new https.Agent({
+      rejectUnauthorized: false
+    });
+    
+    const response = await fetch(
+      `${credentials.protocol}://riot:${credentials.password}@127.0.0.1:${credentials.port}/lol-gameflow/v1/gameflow-phase`,
+      {
+        method: 'GET',
+        agent,
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`riot:${credentials.password}`).toString('base64')}`,
+        },
+      }
+    );
+    
+    return response.ok;
+  } catch (error) {
+    console.error('LCU connection test failed:', error);
+    return false;
   }
 });
 

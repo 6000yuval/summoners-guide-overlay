@@ -54,6 +54,7 @@ export interface MatchupData {
 class RiotApiService {
   private baseUrl = 'https://ddragon.leagueoflegends.com/cdn';
   private version = '13.24.1';
+  private isDevelopment = typeof window !== 'undefined' && window.location?.hostname === 'localhost';
   
   // Cache for champion data
   private championCache: Map<string, ChampionData> = new Map();
@@ -76,6 +77,25 @@ class RiotApiService {
       return this.allChampions;
     }
 
+    // In development, use mock data if available or if API fails
+    if (this.isDevelopment) {
+      try {
+        await this.getLatestVersion();
+        const response = await fetch(
+          `${this.baseUrl}/${this.version}/data/en_US/champion.json`
+        );
+        const data = await response.json();
+        this.allChampions = data.data;
+        return this.allChampions;
+      } catch (error) {
+        console.warn('Failed to fetch champion data from API, using mock data:', error);
+        const { mockService } = await import('./mockService');
+        this.allChampions = mockService.getMockChampionData();
+        return this.allChampions;
+      }
+    }
+
+    // Production mode - try API with fallback
     try {
       await this.getLatestVersion();
       const response = await fetch(
@@ -86,7 +106,7 @@ class RiotApiService {
       return this.allChampions;
     } catch (error) {
       console.error('Failed to fetch champion data:', error);
-      // Return fallback data
+      // Return minimal fallback data
       return {
         'Yasuo': {
           id: 'Yasuo',

@@ -22,8 +22,12 @@ function createMainWindow() {
 
   // Load the app
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
+    const devPort = process.env.DEV_PORT || 3000;
+    mainWindow.loadURL(`http://localhost:${devPort}`);
+    // Only open dev tools if explicitly requested
+    if (process.env.ELECTRON_DEBUG) {
+      mainWindow.webContents.openDevTools();
+    }
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -60,7 +64,8 @@ function createOverlayWindow() {
 
   // Load the overlay route
   if (isDev) {
-    overlayWindow.loadURL('http://localhost:5173#/overlay');
+    const devPort = process.env.DEV_PORT || 3000;
+    overlayWindow.loadURL(`http://localhost:${devPort}#/overlay`);
   } else {
     overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: '/overlay' });
   }

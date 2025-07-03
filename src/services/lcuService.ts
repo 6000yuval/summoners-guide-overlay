@@ -30,6 +30,7 @@ class LCUService {
   private credentials: LCUCredentials | null = null;
   private baseUrl: string = '';
   private isConnected: boolean = false;
+  private isDevelopment = typeof window !== 'undefined' && window.location?.hostname === 'localhost';
 
   async connect(): Promise<boolean> {
     try {
@@ -50,18 +51,30 @@ class LCUService {
         }
       }
       
-      // Fallback to demo mode if no client found
-      console.log('League Client not found, using demo mode');
-      this.credentials = {
-        port: 58783,
-        password: 'demo-password',
-        protocol: 'https'
-      };
-      this.baseUrl = `${this.credentials.protocol}://riot:${this.credentials.password}@127.0.0.1:${this.credentials.port}`;
-      this.isConnected = true;
-      return true;
+      // In development mode or when League isn't running, use mock service
+      if (this.isDevelopment || !credentials) {
+        console.log('League Client not found, using mock/demo mode');
+        const { mockService } = await import('./mockService');
+        this.credentials = mockService.getMockLCUCredentials();
+        this.baseUrl = `${this.credentials.protocol}://riot:${this.credentials.password}@127.0.0.1:${this.credentials.port}`;
+        this.isConnected = true;
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('Failed to connect to League Client:', error);
+      
+      // Fallback to mock in development
+      if (this.isDevelopment) {
+        console.log('Exception occurred, falling back to mock mode');
+        const { mockService } = await import('./mockService');
+        this.credentials = mockService.getMockLCUCredentials();
+        this.baseUrl = `${this.credentials.protocol}://riot:${this.credentials.password}@127.0.0.1:${this.credentials.port}`;
+        this.isConnected = true;
+        return true;
+      }
+      
       this.isConnected = false;
       return false;
     }
@@ -116,8 +129,8 @@ class LCUService {
     if (!this.isConnected) return null;
 
     try {
-      // Try real API call first
-      if (this.credentials && this.credentials.password !== 'demo-password') {
+      // Try real API call first if we have real credentials
+      if (this.credentials && this.credentials.password !== 'demo-password' && this.credentials.password !== 'mock_password') {
         const response = await fetch(`${this.baseUrl}/lol-gameflow/v1/gameflow-phase`, {
           method: 'GET',
           headers: {
@@ -131,14 +144,28 @@ class LCUService {
         }
       }
       
-      // Fallback to demo mode
+      // Use mock data in development or when real connection fails
+      if (this.isDevelopment || this.credentials?.password === 'mock_password') {
+        const { mockService } = await import('./mockService');
+        const mockData = mockService.getMockLeagueData();
+        return { phase: mockData.gamePhase };
+      }
+      
+      // Random fallback for demo mode
       const phases: GameflowPhase['phase'][] = ['None', 'ChampSelect', 'InProgress'];
       const randomPhase = phases[Math.floor(Math.random() * phases.length)];
       
       return { phase: randomPhase };
     } catch (error) {
       console.error('Failed to get gameflow phase:', error);
-      // Return demo data on error
+      
+      // Return mock data on error in development
+      if (this.isDevelopment) {
+        const { mockService } = await import('./mockService');
+        const mockData = mockService.getMockLeagueData();
+        return { phase: mockData.gamePhase };
+      }
+      
       return { phase: 'None' };
     }
   }
@@ -147,8 +174,8 @@ class LCUService {
     if (!this.isConnected) return null;
 
     try {
-      // Try real API call first
-      if (this.credentials && this.credentials.password !== 'demo-password') {
+      // Try real API call first if we have real credentials
+      if (this.credentials && this.credentials.password !== 'demo-password' && this.credentials.password !== 'mock_password') {
         const response = await fetch(`${this.baseUrl}/lol-champ-select/v1/session`, {
           method: 'GET',
           headers: {
@@ -162,7 +189,26 @@ class LCUService {
         }
       }
       
-      // Fallback to mock champion select data
+      // Use mock data in development or when real connection fails
+      if (this.isDevelopment || this.credentials?.password === 'mock_password') {
+        const { mockService } = await import('./mockService');
+        const mockSession = mockService.getMockChampSelectSession();
+        return {
+          localPlayerCellId: mockSession.localPlayerCellId,
+          myTeam: mockSession.myTeam.map(player => ({
+            cellId: player.cellId,
+            championId: player.championId,
+            assignedPosition: 'middle' // Default position for mock
+          })),
+          theirTeam: mockSession.theirTeam.map(enemy => ({
+            cellId: enemy.cellId,
+            championId: enemy.championId,
+            assignedPosition: 'middle' // Default position for mock
+          }))
+        };
+      }
+      
+      // Fallback to basic mock champion select data
       return {
         localPlayerCellId: 0,
         myTeam: [
@@ -174,6 +220,26 @@ class LCUService {
       };
     } catch (error) {
       console.error('Failed to get champion select session:', error);
+      
+      // Return mock data on error in development
+      if (this.isDevelopment) {
+        const { mockService } = await import('./mockService');
+        const mockSession = mockService.getMockChampSelectSession();
+        return {
+          localPlayerCellId: mockSession.localPlayerCellId,
+          myTeam: mockSession.myTeam.map(player => ({
+            cellId: player.cellId,
+            championId: player.championId,
+            assignedPosition: 'middle'
+          })),
+          theirTeam: mockSession.theirTeam.map(enemy => ({
+            cellId: enemy.cellId,
+            championId: enemy.championId,
+            assignedPosition: 'middle'
+          }))
+        };
+      }
+      
       return null;
     }
   }

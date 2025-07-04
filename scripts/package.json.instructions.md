@@ -5,8 +5,8 @@ Since package.json cannot be modified directly, please add these scripts to your
 ```json
 {
   "scripts": {
-    "setup": "node scripts/setup.js",
-    "postinstall": "node scripts/postinstall.js",
+    "setup": "node scripts/setup.cjs",
+    "postinstall": "node scripts/postinstall.cjs",
     "dev": "vite --port 8080 --host",
     "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:8080 && electron .\"",
     "build": "tsc && vite build",

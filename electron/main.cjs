@@ -22,7 +22,7 @@ function createMainWindow() {
 
   // Load the app
   if (isDev) {
-    const devPort = process.env.DEV_PORT || 3000;
+    const devPort = process.env.DEV_PORT || 8080;
     mainWindow.loadURL(`http://localhost:${devPort}`);
     // Only open dev tools if explicitly requested
     if (process.env.ELECTRON_DEBUG) {
@@ -64,7 +64,7 @@ function createOverlayWindow() {
 
   // Load the overlay route
   if (isDev) {
-    const devPort = process.env.DEV_PORT || 3000;
+    const devPort = process.env.DEV_PORT || 8080;
     overlayWindow.loadURL(`http://localhost:${devPort}#/overlay`);
   } else {
     overlayWindow.loadFile(path.join(__dirname, '../dist/index.html'), { hash: '/overlay' });

@@ -7,11 +7,11 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 3000, // Changed to match typical React development port
+    port: 8080, // Changed to match Lovable requirements
     open: false, // Don't auto-open browser (Electron will handle this)
     cors: true,
     hmr: {
-      port: 3001,
+      port: 8081,
     },
   },
   plugins: [

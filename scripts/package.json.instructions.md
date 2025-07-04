@@ -7,8 +7,8 @@ Since package.json cannot be modified directly, please add these scripts to your
   "scripts": {
     "setup": "node scripts/setup.js",
     "postinstall": "node scripts/postinstall.js",
-    "dev": "vite --port 3000 --host",
-    "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "dev": "vite --port 8080 --host",
+    "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:8080 && electron .\"",
     "build": "tsc && vite build",
     "start": "npm run build && electron .",
     "electron": "electron .",
@@ -28,7 +28,7 @@ npm install --save-dev concurrently wait-on
 
 These scripts provide:
 - `npm run setup` - One-time setup for new clones
-- `npm run dev` - Web development server on port 3000
+- `npm run dev` - Web development server on port 8080
 - `npm run dev:electron` - Electron development with hot-reload
 - `npm start` - Production Electron build and start
 - `npm run build` - Build the application

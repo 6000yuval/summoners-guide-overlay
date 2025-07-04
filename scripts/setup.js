@@ -34,7 +34,7 @@ ENABLE_MOCKS=true
 MOCK_GAME_STATE=ChampSelect
 MOCK_CHAMPION=Yasuo
 MOCK_ROLE=mid
-DEV_PORT=3000
+DEV_PORT=8080
 `;
     fs.writeFileSync(envPath, basicEnv);
     console.log('✅ Basic .env file created');

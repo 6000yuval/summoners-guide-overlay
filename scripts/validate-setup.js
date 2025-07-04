@@ -89,8 +89,8 @@ function checkPort(port, description) {
   }
 }
 
-checkPort(3000, 'development server');
-checkPort(3001, 'HMR');
+checkPort(8080, 'development server');
+checkPort(8081, 'HMR');
 
 // Test mock service
 try {

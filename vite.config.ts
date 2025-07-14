@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => ({
       port: 8081,
     },
   },
+  publicDir: 'public',
   plugins: [
     react(),
     mode === 'development' &&

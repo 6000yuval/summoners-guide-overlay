@@ -5,6 +5,15 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
+    // Check if this is a request for a static file (txt, json, xml, etc.)
+    const isStaticFile = /\.(txt|json|xml|ico|png|jpg|jpeg|gif|svg|css|js)$/i.test(location.pathname);
+    
+    if (isStaticFile) {
+      // Redirect to the static file path
+      window.location.href = location.pathname;
+      return;
+    }
+    
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname

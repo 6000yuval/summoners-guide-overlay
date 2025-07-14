@@ -1,0 +1,103 @@
+{
+  "manifest_version": 1,
+  "type": "WebApp",
+  "meta": {
+    "name": "League Coach Pro",
+    "version": "1.0.0",
+    "author": "League Coach Pro Team",
+    "icon": "icons/icon.png",
+    "icon_gray": "icons/icon_gray.png",
+    "description": "Professional League of Legends coaching overlay with real-time analysis and tips"
+  },
+  "permissions": [
+    "GameInfo",
+    "GameControl",
+    "Hotkeys",
+    "DesktopStreaming",
+    "VideoCaptureSettings",
+    "Streaming",
+    "Web"
+  ],
+  "channel-id": 0,
+  "dependencies": null,
+  "data": {
+    "enable_top_isolated_sites_console": true,
+    "protocol_override_domains": null,
+    "force_browser": "user",
+    "plugins_search_path": null,
+    "game_events": [
+      {
+        "game_id": 5426,
+        "events": [
+          "live_client_data",
+          "matchState",
+          "match_info",
+          "game_info", 
+          "kill",
+          "death",
+          "assist",
+          "level",
+          "championSelect"
+        ]
+      }
+    ],
+    "launch_events": [
+      {
+        "event": "GameLaunch",
+        "event_data": {
+          "game_ids": [5426]
+        },
+        "start_minimized": true
+      }
+    ],
+    "windows": {
+      "background": {
+        "file": "background.html",
+        "is_background_page": true,
+        "override_on_update": true,
+        "size": {"width": 1, "height": 1},
+        "start_position": {"top": 0, "left": 0}
+      },
+      "desktop": {
+        "file": "index.html",
+        "show_in_taskbar": true,
+        "transparent": false,
+        "resizable": true,
+        "size": {"width": 1200, "height": 800},
+        "min_size": {"width": 800, "height": 600},
+        "start_position": {"top": 100, "left": 100}
+      },
+      "overlay": {
+        "file": "index.html#/overlay",
+        "transparent": true,
+        "clickthrough": false,
+        "disable_rightclick": false,
+        "forcecapture": false,
+        "show_in_taskbar": false,
+        "grab_keyboard_focus": false,
+        "grab_focus_on_desktop": false,
+        "size": {"width": 1920, "height": 1080},
+        "start_position": {"top": 0, "left": 0},
+        "topmost": true
+      }
+    },
+    "hotkeys": {
+      "toggle_overlay": {
+        "title": "Toggle Overlay",
+        "action-type": "toggle",
+        "default": "Alt+A"
+      },
+      "show_tips": {
+        "title": "Show Champion Tips", 
+        "action-type": "custom",
+        "default": "Alt+T"
+      }
+    },
+    "content_scripts": [
+      {
+        "windows": ["desktop", "overlay"],
+        "matches": ["*://overwolf-extension://*/*"]
+      }
+    ]
+  }
+}

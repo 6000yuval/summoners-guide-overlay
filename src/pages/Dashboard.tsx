@@ -9,7 +9,19 @@ import ReplayAnalysis from '@/components/ReplayAnalysis';
 import NotificationSettings from '@/components/NotificationSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Play, Settings, Target, Eye, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useOverwolfIntegration } from '@/hooks/useOverwolfIntegration';
+import { 
+  Play, 
+  Settings, 
+  Target, 
+  Eye, 
+  BarChart3, 
+  Gamepad2,
+  Minimize2,
+  X,
+  Maximize2
+} from 'lucide-react';
 
 interface Champion {
   name: string;
@@ -31,6 +43,16 @@ const Dashboard = () => {
   const [gameTime, setGameTime] = useState(0);
   const [matchupData, setMatchupData] = useState<MatchupData | undefined>();
   const [notifications, setNotifications] = useState<any[]>([]);
+  
+  const { 
+    connected, 
+    gameRunning, 
+    gamePhase, 
+    isOverwolfAvailable,
+    minimizeWindow,
+    closeWindow,
+    maximizeWindow
+  } = useOverwolfIntegration();
 
   // Game timer simulation - in real app this would sync with LCU API
   useEffect(() => {
@@ -57,7 +79,37 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-background">
+      {/* Title Bar */}
+      <div className="flex items-center justify-between p-4 border-b bg-card">
+        <div className="flex items-center gap-3">
+          <Gamepad2 className="h-6 w-6 text-primary" />
+          <h1 className="text-xl font-bold">League Coach Pro</h1>
+          <Badge variant={connected ? "default" : "secondary"}>
+            {connected ? "Connected" : "Disconnected"}
+          </Badge>
+          {gameRunning && (
+            <Badge variant="outline">
+              {gamePhase}
+            </Badge>
+          )}
+        </div>
+        
+        {isOverwolfAvailable && (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={minimizeWindow}>
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={maximizeWindow}>
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={closeWindow}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Game Overlay - Always visible when game is active */}
       {gameActive && matchupData && (
         <GameOverlay
@@ -79,29 +131,49 @@ const Dashboard = () => {
       )}
 
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">League Coach Pro</h1>
-              <p className="text-slate-400">Real-time coaching for League of Legends</p>
-            </div>
-            <div className="flex items-center gap-4">
-              {gameActive && (
-                <Badge className="bg-green-600 text-white px-4 py-2">
-                  LIVE - {Math.floor(gameTime / 60)}:{(gameTime % 60).toString().padStart(2, '0')}
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-slate-400">
-                Not endorsed by Riot Games
-              </Badge>
-            </div>
-          </div>
+        {/* Overwolf Status */}
+        <div className="mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Overwolf Integration Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {connected ? "✓" : "○"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Connection</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {gameRunning ? "✓" : "○"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Game Running</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {gamePhase}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Phase</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {isOverwolfAvailable ? "Overwolf" : "Web"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Platform</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Interface */}
         <Tabs defaultValue="live" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="live" className="flex items-center gap-2">
               <Play className="h-4 w-4" />
               Live Game
@@ -125,21 +197,24 @@ const Dashboard = () => {
             {!gameActive ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ChampionDetector onDetection={handleChampionDetection} />
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card>
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2">
                       <Target className="h-5 w-5" />
                       Game Status
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-8">
-                      <div className="text-slate-400 mb-4">
+                      <div className="text-muted-foreground mb-4">
                         <Play className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       </div>
-                      <h3 className="text-white font-semibold mb-2">Waiting for Game</h3>
-                      <p className="text-slate-400 text-sm">
-                        Start a League of Legends match to begin receiving coaching
+                      <h3 className="font-semibold mb-2">Waiting for Game</h3>
+                      <p className="text-muted-foreground text-sm">
+                        {isOverwolfAvailable 
+                          ? "Start League of Legends to begin receiving coaching"
+                          : "Running in web mode - full features available in Overwolf"
+                        }
                       </p>
                     </div>
                   </CardContent>
@@ -156,17 +231,17 @@ const Dashboard = () => {
                 )}
                 
                 {/* Recent Notifications */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card>
                   <CardHeader>
-                    <CardTitle className="text-white">Recent Notifications</CardTitle>
+                    <CardTitle>Recent Notifications</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {notifications.length === 0 ? (
-                      <p className="text-slate-400 text-sm">No notifications yet...</p>
+                      <p className="text-muted-foreground text-sm">No notifications yet...</p>
                     ) : (
                       <div className="space-y-2">
                         {notifications.slice(-3).map((notif, index) => (
-                          <div key={index} className="p-2 bg-slate-700/50 rounded text-sm text-slate-300">
+                          <div key={index} className="p-2 bg-muted rounded text-sm">
                             {notif.message}
                           </div>
                         ))}
@@ -190,36 +265,49 @@ const Dashboard = () => {
 
           {/* About Tab */}
           <TabsContent value="about">
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white">About League Coach Pro</CardTitle>
+                <CardTitle>About League Coach Pro</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-slate-300">
+              <CardContent className="space-y-4">
                 <div>
-                  <h3 className="text-white font-semibold mb-2">Features</h3>
-                  <ul className="space-y-1 text-sm">
+                  <h3 className="font-semibold mb-2">Features</h3>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
                     <li>• Real-time champion detection and matchup analysis</li>
                     <li>• Role-specific coaching notifications</li>
                     <li>• Automatic replay analysis</li>
                     <li>• Jungle tracking and gank warnings</li>
                     <li>• Objective timing reminders</li>
                     <li>• Post-game performance insights</li>
+                    <li>• Native Overwolf integration</li>
+                    <li>• Customizable overlay system</li>
                   </ul>
                 </div>
                 
                 <div>
-                  <h3 className="text-white font-semibold mb-2">Technical Requirements</h3>
-                  <ul className="space-y-1 text-sm">
+                  <h3 className="font-semibold mb-2">Technical Requirements</h3>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
                     <li>• Windows 10 64-bit or higher</li>
-                    <li>• Intel i3 processor or equivalent</li>
-                    <li>• 4 GB RAM minimum</li>
-                    <li>• 16 GB free disk space</li>
+                    <li>• Overwolf platform installed</li>
                     <li>• League of Legends installed</li>
+                    <li>• 4 GB RAM minimum</li>
+                    <li>• 1 GB free disk space</li>
                   </ul>
                 </div>
 
-                <div className="pt-4 border-t border-slate-600">
-                  <p className="text-xs text-slate-400">
+                <div>
+                  <h3 className="font-semibold mb-2">Overwolf Benefits</h3>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li>• Native game integration and events</li>
+                    <li>• Automatic updates through Overwolf store</li>
+                    <li>• Secure and trusted platform</li>
+                    <li>• Optimized for gaming performance</li>
+                    <li>• Built-in overlay management</li>
+                  </ul>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-xs text-muted-foreground">
                     League Coach Pro is not endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends.
                   </p>
                 </div>
